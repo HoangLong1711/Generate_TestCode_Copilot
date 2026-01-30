@@ -40,6 +40,22 @@ The core idea is to **guide Copilot with a predefined agent instruction** so tha
 Copilot then acts as an **AI test generator**, not just a code completer.
 
 ---
+## 🧪 Step-by-Step: How to Use Copilot Agent
+
+This section explains how to use **Generate_TestCode_Copilot** to automatically generate unit test scripts using **GitHub Copilot Agent in VS Code**.
+
+## How to Use
+
+1. Open the source file you want to generate unit tests for in VS Code.
+
+2. In Copilot Chat (Agent mode), use the following command:
+
+    **--> Generate for this file + <module_name>**
+
+3. Check the generated test script in the **test** folder.
+
+4. Check the coverage report in the **report** folder.
+---
 
 ## 📂 Project Structure
 
