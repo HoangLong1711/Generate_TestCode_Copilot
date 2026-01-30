@@ -1,0 +1,1 @@
+-IF:/AI_Gen_CPlus/MyProject/inc -isystem "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src/googletest/include" -isystem "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src/googletest" -isystem "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src/googlemock/include" -isystem "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src/googlemock"
