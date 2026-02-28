@@ -29,6 +29,22 @@ The workflow is intentionally simple and developer-friendly.
 
 ---
 
+## 📦 Prerequisites (What to Install)
+
+To run this tool on a new computer, you need to install the following software and ensure they are added to your system's `PATH`:
+
+### Required
+- **[CMake](https://cmake.org/download/)** (v3.14+): Used to configure the build system.
+- **C++ Compiler & Make tool**: We highly recommend **[MinGW-w64 (GCC)](https://www.msys2.org/)** as the `run.bat` script natively relies on `mingw32-make` and `MinGW Makefiles`.
+
+### Optional (For Code Coverage Reports)
+- **[LLVM/Clang](https://releases.llvm.org/)** (`clang++`, `llvm-profdata`, `llvm-cov`): Recommended for faster, source-based HTML coverage reporting.
+- **[Python](https://www.python.org/downloads/) & [gcovr](https://gcovr.com/)** (run `pip install gcovr`): Used as a fallback coverage reporting tool if LLVM is not available.
+
+*(Note: The **Google Test/Mock** framework is downloaded automatically by CMake during the build process, so no manual installation is required.)*
+
+---
+
 ## 🧠 How It Works
 
 The core idea is to **guide Copilot with a predefined agent instruction** so that it understands:
