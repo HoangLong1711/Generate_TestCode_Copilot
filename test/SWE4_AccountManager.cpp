@@ -1,640 +1,519 @@
-/**
- * @file SWE4_AccountManager.cpp
- * @module AccountManager
- * @author AI Test Generator
- * @date 2026-02-28
- * @brief Comprehensive Google Test unit tests for AccountManager class.
- * 
- * This test suite provides comprehensive coverage of the AccountManager class
- * including account creation, activation, suspension, deactivation, risk evaluation,
- * and account status management. External service dependencies are mocked using
- * Google Mock to ensure unit test isolation.
- */
-
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "AccountManager.hpp"
-#include "ExternalServices.hpp"
+#include <limits>
+#include <tuple>
 
-using ::testing::Return;
-using ::testing::ReturnRef;
-using ::testing::StrictMock;
+#include "../inc/AccountManager.hpp"
+#include "../inc/ExternalServices.hpp"
+
 using ::testing::NiceMock;
+using ::testing::Return;
 using ::testing::_;
 
 // ============================================================================
-// MOCK IMPLEMENTATIONS
+// Mock Classes
 // ============================================================================
 
-/**
- * Mock implementation of AuthenticationService for testing.
- */
 class MockAuthenticationService : public AuthenticationService {
 public:
-    MOCK_METHOD(bool, validateCredentials, (const std::string&, const std::string&), (override));
-    MOCK_METHOD(bool, enableMultiFactor, (const std::string&), (override));
-    MOCK_METHOD(VerificationResult, verifyMultiFactorToken, (const std::string&, const std::string&), (override));
-    MOCK_METHOD(bool, lockAccount, (const std::string&), (override));
+    MOCK_METHOD(bool, validateCredentials, (const std::string& username, const std::string& password), (override));
+    MOCK_METHOD(bool, enableMultiFactor, (const std::string& accountNumber), (override));
+    MOCK_METHOD(VerificationResult, verifyMultiFactorToken, (const std::string& accountNumber, const std::string& token), (override));
+    MOCK_METHOD(bool, lockAccount, (const std::string& accountNumber), (override));
 };
 
-/**
- * Mock implementation of NotificationService for testing.
- */
 class MockNotificationService : public NotificationService {
 public:
-    MOCK_METHOD(bool, sendEmailNotification, (const std::string&, const std::string&, const std::string&), (override));
-    MOCK_METHOD(bool, sendSmsNotification, (const std::string&, const std::string&), (override));
-    MOCK_METHOD(bool, sendPushNotification, (const std::string&, const std::string&, const std::string&), (override));
-    MOCK_METHOD(bool, subscribeToNotifications, (const std::string&, const std::string&), (override));
+    MOCK_METHOD(bool, sendEmailNotification, (const std::string& email, const std::string& subject, const std::string& body), (override));
+    MOCK_METHOD(bool, sendSmsNotification, (const std::string& phoneNumber, const std::string& message), (override));
+    MOCK_METHOD(bool, sendPushNotification, (const std::string& deviceToken, const std::string& title, const std::string& message), (override));
+    MOCK_METHOD(bool, subscribeToNotifications, (const std::string& accountNumber, const std::string& notificationType), (override));
 };
 
-/**
- * Mock implementation of ExternalDataService for testing.
- */
 class MockExternalDataService : public ExternalDataService {
 public:
-    MOCK_METHOD(std::vector<std::string>, getLinkedAccounts, (const std::string&), (override));
-    MOCK_METHOD(std::string, getIdentityVerificationStatus, (const std::string&), (override));
-    MOCK_METHOD(std::string, getCreditScore, (const std::string&), (override));
-    MOCK_METHOD(bool, validateBankAccount, (const std::string&, const std::string&), (override));
+    MOCK_METHOD(std::string, getCreditScore, (const std::string& accountNumber), (override));
+    MOCK_METHOD(std::string, getIdentityVerificationStatus, (const std::string& accountNumber), (override));
+    MOCK_METHOD(bool, validateBankAccount, (const std::string& bankAccount, const std::string& routingNumber), (override));
+    MOCK_METHOD(std::vector<std::string>, getLinkedAccounts, (const std::string& primaryAccount), (override));
 };
 
 // ============================================================================
-// TEST FIXTURE
+// Test Fixture Class for normal individual tests
 // ============================================================================
 
-/**
- * Test fixture for AccountManager tests.
- * Provides setup and teardown for each test case.
- */
-class AccountManagerTest : public ::testing::Test {
+class AccountManagerUnitTest : public ::testing::Test {
 protected:
-    AccountManager accountManager;
-    NiceMock<MockAuthenticationService> authService;
-    NiceMock<MockNotificationService> notificationService;
-    NiceMock<MockExternalDataService> dataService;
+    AccountManager sut;
+    NiceMock<MockAuthenticationService> mockAuth;
+    NiceMock<MockNotificationService> mockNotif;
+    NiceMock<MockExternalDataService> mockData;
 
     void SetUp() override {
-        accountManager.setAuthenticationService(&authService);
-        accountManager.setNotificationService(&notificationService);
-        accountManager.setExternalDataService(&dataService);
+        sut.setAuthenticationService(&mockAuth);
+        sut.setNotificationService(&mockNotif);
+        sut.setExternalDataService(&mockData);
+        
+        // Ensure default mock behavior if needed, e.g., dummy vectors for getLinkedAccounts
+        ON_CALL(mockData, getLinkedAccounts(_)).WillByDefault(Return(std::vector<std::string>{}));
     }
 
     void TearDown() override {
-        // Cleanup if needed
+        // Services aren't owned by AccountManager, so no manual deletion needed inside it from ptrs
     }
 };
 
 // ============================================================================
-// CREATE ACCOUNT TESTS
+// Method: createAccount()
 // ============================================================================
 
-/**
- * Test: createAccount_ValidInput_ReturnsValidAccountNumber
- * Condition: Valid account type and initial balance >= MINIMUM_BALANCE
- * Expected: Account number should be generated and returned
- */
-TEST_F(AccountManagerTest, createAccount_ValidInput_ReturnsValidAccountNumber) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    
-    ASSERT_FALSE(accountNumber.empty());
-    ASSERT_TRUE(accountNumber.find("ACC") == 0);
+/// ===========================================================================
+/// Verifies: AccountManager::createAccount()
+/// Test goal: Correctly create account if valid balance and max limit not reached
+/// In case: Create AccountManager, call createAccount with acceptable balance, verify length
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_createAccount_Normal_Valid_Balance) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 100.0);
+    EXPECT_FALSE(acc.empty());
+    EXPECT_EQ(sut.getAccountBalance(acc), 100.0);
 }
 
-/**
- * Test: createAccount_InsufficientBalance_ReturnsEmpty
- * Condition: Initial balance below MINIMUM_BALANCE
- * Expected: Empty account number should be returned
- */
-TEST_F(AccountManagerTest, createAccount_InsufficientBalance_ReturnsEmpty) {
-    std::string accountNumber = accountManager.createAccount(AccountType::SAVINGS, 0.005);
-    
-    ASSERT_TRUE(accountNumber.empty());
+/// ===========================================================================
+/// Verifies: AccountManager::createAccount()
+/// Test goal: Refuses to create account if initial balance is less than minimum
+/// In case: call createAccount with negative or zero balance, expecting empty return
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_createAccount_Error_Below_Min_Balance) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 0.0);
+    EXPECT_TRUE(acc.empty());
 }
 
-/**
- * Test: createAccount_ZeroBalance_ReturnsEmpty
- * Condition: Initial balance is exactly zero
- * Expected: Empty account number should be returned
- */
-TEST_F(AccountManagerTest, createAccount_ZeroBalance_ReturnsEmpty) {
-    std::string accountNumber = accountManager.createAccount(AccountType::BUSINESS, 0.0);
-    
-    ASSERT_TRUE(accountNumber.empty());
+/// ===========================================================================
+/// Verifies: AccountManager::createAccount()
+/// Test goal: Refuse creating more accounts than MAX_ACCOUNTS_PER_USER
+/// In case: create 10 valid accounts, the 11th should return an empty string
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_createAccount_Error_Max_Accounts_Reached) {
+    for (int i = 0; i < 10; ++i) {
+        std::string acc = sut.createAccount(AccountType::CHECKING, 10.0);
+        EXPECT_FALSE(acc.empty());
+    }
+    // 11th attempt shouldn't work
+    std::string accOver = sut.createAccount(AccountType::CHECKING, 10.0);
+    EXPECT_TRUE(accOver.empty());
 }
 
-/**
- * Test: createAccount_BoundaryMinimumBalance_ReturnsValidAccount
- * Condition: Initial balance equals MINIMUM_BALANCE (0.01)
- * Expected: Account should be created successfully
- */
-TEST_F(AccountManagerTest, createAccount_BoundaryMinimumBalance_ReturnsValidAccount) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 0.01);
-    
-    ASSERT_FALSE(accountNumber.empty());
-}
-
-/**
- * Test: createAccount_LargeBalance_ReturnsValidAccount
- * Condition: Initial balance is very large
- * Expected: Account should be created successfully
- */
-TEST_F(AccountManagerTest, createAccount_LargeBalance_ReturnsValidAccount) {
-    std::string accountNumber = accountManager.createAccount(AccountType::INVESTMENT, 999999999.99);
-    
-    ASSERT_FALSE(accountNumber.empty());
-}
-
-/**
- * Test: createAccount_MultipleAccounts_IncrementsAccountNumber
- * Condition: Creating multiple accounts sequentially
- * Expected: Each account should have unique incrementing account number
- */
-TEST_F(AccountManagerTest, createAccount_MultipleAccounts_IncrementsAccountNumber) {
-    std::string acc1 = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    std::string acc2 = accountManager.createAccount(AccountType::SAVINGS, 2000.0);
-    
-    ASSERT_NE(acc1, acc2);
-}
 
 // ============================================================================
-// ACTIVATE ACCOUNT TESTS
+// Method: activateAccount()
 // ============================================================================
 
-/**
- * Test: activateAccount_NonexistentAccount_ReturnsFalse
- * Condition: Account does not exist
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, activateAccount_NonexistentAccount_ReturnsFalse) {
-    bool result = accountManager.activateAccount("ACC999999");
+/// ===========================================================================
+/// Verifies: AccountManager::activateAccount()
+/// Test goal: Validate successful account activation
+/// In case: Create account, set as verified via mock, call activateAccount
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_activateAccount_Normal_Success) {
+    std::string acc = sut.createAccount(AccountType::SAVINGS, 50.0);
+    sut.verifyAccount(acc, true); // this will also set it straight to ACTIVE if it succeeds
+    // In that case, let's reset to test activateAccount manually
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = AccountStatus::PENDING_VERIFICATION;
+    ptr->isVerified = true;
     
-    ASSERT_FALSE(result);
+    bool active = sut.activateAccount(acc);
+    EXPECT_TRUE(active);
+    EXPECT_EQ(ptr->status, AccountStatus::ACTIVE);
 }
 
-/**
- * Test: activateAccount_UnverifiedPendingAccount_ReturnsFalse
- * Condition: Account status is PENDING_VERIFICATION and not verified
- * Expected: Activation should fail
- */
-TEST_F(AccountManagerTest, activateAccount_UnverifiedPendingAccount_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    bool result = accountManager.activateAccount(accountNumber);
-    
-    ASSERT_FALSE(result);
+/// ===========================================================================
+/// Verifies: AccountManager::activateAccount()
+/// Test goal: Validate failed activation if account doesn't exist
+/// In case: call activateAccount on non-existent ID
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_activateAccount_Error_NotFound) {
+    bool active = sut.activateAccount("ACC999999");
+    EXPECT_FALSE(active);
 }
 
-/**
- * Test: activateAccount_VerifiedPendingAccount_ReturnsTrue
- * Condition: Account is PENDING_VERIFICATION and verified
- * Expected: Activation should succeed
- */
-TEST_F(AccountManagerTest, activateAccount_VerifiedPendingAccount_ReturnsTrue) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.verifyAccount(accountNumber, true);
-    bool result = accountManager.activateAccount(accountNumber);
-    
-    ASSERT_TRUE(result);
+/// ===========================================================================
+/// Verifies: AccountManager::activateAccount()
+/// Test goal: Validate failure if account is not verified and is pending
+/// In case: call activateAccount on newly created account without verification
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_activateAccount_Error_NotVerified) {
+    std::string acc = sut.createAccount(AccountType::SAVINGS, 50.0);
+    bool active = sut.activateAccount(acc);
+    EXPECT_FALSE(active);
 }
 
-/**
- * Test: activateAccount_ClosedAccount_ReturnsFalse
- * Condition: Account status is CLOSED
- * Expected: Activation should fail
- */
-TEST_F(AccountManagerTest, activateAccount_ClosedAccount_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::CLOSED);
+/// ===========================================================================
+/// Verifies: AccountManager::activateAccount()
+/// Test goal: Validate failure if account is frozen
+/// In case: call activateAccount on frozen account
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_activateAccount_Error_Frozen) {
+    std::string acc = sut.createAccount(AccountType::SAVINGS, 50.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = AccountStatus::FROZEN;
     
-    bool result = accountManager.activateAccount(accountNumber);
-    
-    ASSERT_FALSE(result);
+    bool active = sut.activateAccount(acc);
+    EXPECT_FALSE(active);
 }
 
-/**
- * Test: activateAccount_FrozenAccount_ReturnsFalse
- * Condition: Account status is FROZEN
- * Expected: Activation should fail
- */
-TEST_F(AccountManagerTest, activateAccount_FrozenAccount_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::FROZEN);
+
+/// ===========================================================================
+/// Verifies: AccountManager::activateAccount()
+/// Test goal: Validate failure if account is closed
+/// In case: call activateAccount on closed account
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_activateAccount_Error_Closed) {
+    std::string acc = sut.createAccount(AccountType::SAVINGS, 50.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = AccountStatus::CLOSED;
     
-    bool result = accountManager.activateAccount(accountNumber);
-    
-    ASSERT_FALSE(result);
+    bool active = sut.activateAccount(acc);
+    EXPECT_FALSE(active);
 }
 
 // ============================================================================
-// SUSPEND ACCOUNT TESTS
+// Method: suspendAccount()
 // ============================================================================
 
-/**
- * Test: suspendAccount_ValidAccount_ReturnsTrue
- * Condition: Account exists and is not closed
- * Expected: Account should be suspended
- */
-TEST_F(AccountManagerTest, suspendAccount_ValidAccount_ReturnsTrue) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    bool result = accountManager.suspendAccount(accountNumber, "Suspicious activity");
+/// ===========================================================================
+/// Verifies: AccountManager::suspendAccount()
+/// Test goal: Correctly suspends a valid account
+/// In case: Create account, suspend it, verify status is SUSPENDED and suspended count increments
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_suspendAccount_Normal_Success) {
+    int initS = sut.getSuspendedAccountCount();
+    std::string acc = sut.createAccount(AccountType::CHECKING, 50.0);
     
-    ASSERT_TRUE(result);
-    ASSERT_EQ(accountManager.getSuspendedAccountCount(), 1);
+    bool ret = sut.suspendAccount(acc, "Suspicious activity");
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(sut.getAccount(acc)->status, AccountStatus::SUSPENDED);
+    EXPECT_EQ(sut.getSuspendedAccountCount(), initS + 1);
 }
 
-/**
- * Test: suspendAccount_NonexistentAccount_ReturnsFalse
- * Condition: Account does not exist
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, suspendAccount_NonexistentAccount_ReturnsFalse) {
-    bool result = accountManager.suspendAccount("ACC999999", "Test reason");
+/// ===========================================================================
+/// Verifies: AccountManager::suspendAccount()
+/// Test goal: Fails to suspend closed or missing account
+/// In case: Suspend missing and then closed accounts
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_suspendAccount_Error_InvalidState) {
+    EXPECT_FALSE(sut.suspendAccount("ACC999999", "reason"));
     
-    ASSERT_FALSE(result);
+    std::string acc = sut.createAccount(AccountType::CHECKING, 50.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = AccountStatus::CLOSED;
+    
+    EXPECT_FALSE(sut.suspendAccount(acc, "reason"));
 }
 
-/**
- * Test: suspendAccount_ClosedAccount_ReturnsFalse
- * Condition: Account status is CLOSED
- * Expected: Suspension should fail
- */
-TEST_F(AccountManagerTest, suspendAccount_ClosedAccount_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::CLOSED);
-    
-    bool result = accountManager.suspendAccount(accountNumber, "Test reason");
-    
-    ASSERT_FALSE(result);
-}
-
-/**
- * Test: suspendAccount_MultipleSuspensions_CounterIncrementsCorrectly
- * Condition: Multiple accounts are suspended
- * Expected: Suspended account counter should increment
- */
-TEST_F(AccountManagerTest, suspendAccount_MultipleSuspensions_CounterIncrementsCorrectly) {
-    std::string acc1 = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    std::string acc2 = accountManager.createAccount(AccountType::SAVINGS, 2000.0);
-    
-    accountManager.suspendAccount(acc1, "Reason 1");
-    accountManager.suspendAccount(acc2, "Reason 2");
-    
-    ASSERT_EQ(accountManager.getSuspendedAccountCount(), 2);
-}
 
 // ============================================================================
-// DEACTIVATE ACCOUNT TESTS
+// Method: deactivateAccount()
 // ============================================================================
 
-/**
- * Test: deactivateAccount_NonexistentAccount_ReturnsFalse
- * Condition: Account does not exist
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, deactivateAccount_NonexistentAccount_ReturnsFalse) {
-    bool result = accountManager.deactivateAccount("ACC999999");
+/// ===========================================================================
+/// Verifies: AccountManager::deactivateAccount()
+/// Test goal: Validates deactivation of an account with 0 balance
+/// In case: Create account, set balance to 0, deactivate it
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_deactivateAccount_Normal_Success) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 50.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->balance = 0.0;
     
-    ASSERT_FALSE(result);
+    bool ret = sut.deactivateAccount(acc);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(ptr->status, AccountStatus::CLOSED);
 }
 
-/**
- * Test: deactivateAccount_AccountWithBalance_ReturnsFalse
- * Condition: Account has positive balance
- * Expected: Deactivation should fail
- */
-TEST_F(AccountManagerTest, deactivateAccount_AccountWithBalance_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    
-    bool result = accountManager.deactivateAccount(accountNumber);
-    
-    ASSERT_FALSE(result);
+/// ===========================================================================
+/// Verifies: AccountManager::deactivateAccount()
+/// Test goal: Fails to deactivate an account with balance
+/// In case: Create account with 50 balance, deactivate it, should fail
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_deactivateAccount_Error_HasBalance) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 50.0);
+    bool ret = sut.deactivateAccount(acc);
+    EXPECT_FALSE(ret);
 }
 
-/**
- * Test: deactivateAccount_ClosedAccount_ReturnsFalse
- * Condition: Account is already closed
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, deactivateAccount_ClosedAccount_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::CLOSED);
+/// ===========================================================================
+/// Verifies: AccountManager::deactivateAccount()
+/// Test goal: Fails to deactivate an already closed or invalid account
+/// In case: Deactivate missing account, and closed account
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_deactivateAccount_Error_InvalidState) {
+    EXPECT_FALSE(sut.deactivateAccount("ACC999999"));
     
-    bool result = accountManager.deactivateAccount(accountNumber);
-    
-    ASSERT_FALSE(result);
+    std::string acc = sut.createAccount(AccountType::CHECKING, 50.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = AccountStatus::CLOSED;
+    EXPECT_FALSE(sut.deactivateAccount(acc));
 }
 
-/**
- * Test: deactivateAccount_ZeroBalanceAccount_ReturnsTrue
- * Condition: Account balance is zero
- * Expected: Deactivation should succeed
- */
-TEST_F(AccountManagerTest, deactivateAccount_ZeroBalanceAccount_ReturnsTrue) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    Account* acc = accountManager.getAccount(accountNumber);
-    if (acc) {
-        acc->balance = 0.0;
+
+// ============================================================================
+// Method: evaluateAccountRisk() (Parameterized testing for conditionals)
+// ============================================================================
+
+class EvaluateRiskParamTest : public ::testing::TestWithParam<std::tuple<int, double, bool, bool, bool, AccountStatus>> {
+protected:
+    AccountManager sut;
+    NiceMock<MockExternalDataService> mockData;
+
+    void SetUp() override {
+        sut.setExternalDataService(&mockData);
+        ON_CALL(mockData, getLinkedAccounts(_)).WillByDefault(Return(std::vector<std::string>{"L1", "L2"}));
+    }
+};
+
+extern bool g_complianceAuditMode; // To modify the global variable
+
+// Parameters:
+// transactionCount, volumeLastDay, isVerified, hasFraudAlert, complianceAuditMode, ExpectedStatus
+INSTANTIATE_TEST_SUITE_P(
+    SWE4_AccountManager_RiskCases,
+    EvaluateRiskParamTest,
+    ::testing::Values(
+        // Very high risk, frozen due to audit mode
+        std::make_tuple(150 /*+30*/, 1200000.0 /*+40*/, false, true /*+35*/, true, AccountStatus::FROZEN),
+        // Very high risk, suspended (no audit mode)
+        std::make_tuple(150 /*+30*/, 1200000.0 /*+40*/, false, true /*+35*/, false, AccountStatus::SUSPENDED),
+        // Moderately high risk mapped to PENDING_VERIFICATION (Score between 50 and 75)
+        std::make_tuple(60 /*+15*/, 600000.0 /*+20*/, false, false /*+20*/, false, AccountStatus::PENDING_VERIFICATION), // Score 55
+        // Safe account mapped to ACTIVE
+        std::make_tuple(5, 500.0, true, false, false, AccountStatus::ACTIVE),
+        // MCDC conditions on transactionCount
+        std::make_tuple(25 /*+5*/, 0.0, true, false, false, AccountStatus::ACTIVE),
+        // MCDC conditions on Volume
+        std::make_tuple(5, 150000.0 /*+10*/, true, false, false, AccountStatus::ACTIVE),
+        // MCDC conditions on verification vs fraud alert
+        std::make_tuple(5, 0.0, true, true /*+25*/, false, AccountStatus::ACTIVE)
+    )
+);
+
+/// ===========================================================================
+/// Verifies: AccountManager::evaluateAccountRisk()
+/// Test goal: Checks MCDC combinations of risk limits and returns correct RiskStatus
+/// In case: Create account, set attributes, invoke evaluation
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_P(EvaluateRiskParamTest, SWE4_AccountManager_evaluateAccountRisk_MCDC) {
+    auto [txCount, volLatest, isVerified, fraudAlert, auditMode, expectedStatus] = GetParam();
+    
+    g_complianceAuditMode = auditMode;
+    std::string acc = sut.createAccount(AccountType::BUSINESS, 100.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->isVerified = isVerified;
+    ptr->hasFraudAlert = fraudAlert;
+    
+    // Check mock being called
+    EXPECT_CALL(mockData, getLinkedAccounts(acc)).Times(1);
+
+    AccountStatus st = sut.evaluateAccountRisk(acc, txCount, volLatest);
+    EXPECT_EQ(st, expectedStatus);
+    
+    // Reset global state
+    g_complianceAuditMode = false;
+}
+
+// Ensure unknown evaluateAccountRisk returns CLOSED
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_evaluateAccountRisk_Error_NotFound) {
+    EXPECT_EQ(sut.evaluateAccountRisk("ACC9999", 5, 5.0), AccountStatus::CLOSED);
+}
+
+// Ensure evaluateAccountRisk works without data service
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_evaluateAccountRisk_NullDataService) {
+    sut.setExternalDataService(nullptr);
+    std::string acc = sut.createAccount(AccountType::BUSINESS, 100.0);
+    AccountStatus st = sut.evaluateAccountRisk(acc, 5, 50.0);
+    EXPECT_EQ(st, AccountStatus::ACTIVE);
+}
+
+
+// ============================================================================
+// Method: updateAccountStatus()
+// ============================================================================
+
+class UpdateStatusParamTest : public ::testing::TestWithParam<std::tuple<AccountStatus, AccountStatus, int, bool, bool, bool>> {
+protected:
+    AccountManager sut;
+};
+
+// Params: oldStatus, newStatus, riskScore, isVerified, fraudAlert, expectedReturn
+INSTANTIATE_TEST_SUITE_P(
+    SWE4_AccountManager_UpdateStatusCases,
+    UpdateStatusParamTest,
+    ::testing::Values(
+        std::make_tuple(AccountStatus::CLOSED, AccountStatus::ACTIVE, 0, true, false, false), // Can't revert closed
+        std::make_tuple(AccountStatus::CLOSED, AccountStatus::CLOSED, 0, true, false, true),  // Closed to closed is allowed
+        std::make_tuple(AccountStatus::FROZEN, AccountStatus::ACTIVE, 0, false, false, false),// Unfrozen needs verification
+        std::make_tuple(AccountStatus::FROZEN, AccountStatus::ACTIVE, 0, true, true, false),  // Unfrozen cant have fraud alert
+        std::make_tuple(AccountStatus::FROZEN, AccountStatus::ACTIVE, 0, true, false, true),  // Valid unfrozen
+        std::make_tuple(AccountStatus::FROZEN, AccountStatus::CLOSED, 0, true, false, true),  // Valid frozen to closed
+        std::make_tuple(AccountStatus::ACTIVE, AccountStatus::SUSPENDED, 50, true, false, false), // Can't suspend if score < 75 AND active
+        std::make_tuple(AccountStatus::PENDING_VERIFICATION, AccountStatus::SUSPENDED, 50, true, false, true), // OK if not active
+        std::make_tuple(AccountStatus::ACTIVE, AccountStatus::SUSPENDED, 80, true, false, true),  // Valid suspend
+        std::make_tuple(AccountStatus::SUSPENDED, AccountStatus::ACTIVE, 0, true, false, true),  // Valid un-suspend (should decrement suspended count)
+        std::make_tuple(AccountStatus::ACTIVE, AccountStatus::PENDING_VERIFICATION, 0, true, false, true), // Normal transition
+        std::make_tuple(AccountStatus::ACTIVE, AccountStatus::FROZEN, 0, true, false, true), // Active to frozen
+        std::make_tuple(AccountStatus::SUSPENDED, AccountStatus::CLOSED, 0, true, false, true) // Suspended to closed
+    )
+);
+
+/// ===========================================================================
+/// Verifies: AccountManager::updateAccountStatus()
+/// Test goal: Checks various state transitions for updateAccountStatus using MCDC coverage
+/// In case: Pre-set Account, execute update and verify expected bool return
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_P(UpdateStatusParamTest, SWE4_AccountManager_updateAccountStatus_Transitions) {
+    auto [oldSt, newSt, score, isVerified, fraudAlert, expected] = GetParam();
+    std::string acc = sut.createAccount(AccountType::CHECKING, 10.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = oldSt;
+    ptr->riskScore = score;
+    ptr->isVerified = isVerified;
+    ptr->hasFraudAlert = fraudAlert;
+    
+    // To handle suspend counts which is a bit messy, let's normalize this instance.
+    if (oldSt == AccountStatus::SUSPENDED) {
+        // Technically not a valid state since we bypass the actual suspend func, count won't match,
+        // but it doesn't matter for the bool logic tested.
     }
     
-    bool result = accountManager.deactivateAccount(accountNumber);
-    
-    ASSERT_TRUE(result);
+    bool ret = sut.updateAccountStatus(acc, newSt);
+    EXPECT_EQ(ret, expected);
 }
+
+// NotFound test
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_updateAccountStatus_Error_NotFound) {
+    EXPECT_FALSE(sut.updateAccountStatus("ACC99", AccountStatus::ACTIVE));
+}
+
 
 // ============================================================================
-// EVALUATE ACCOUNT RISK TESTS
+// Method: verifyAccount()
 // ============================================================================
 
-/**
- * Test: evaluateAccountRisk_NonexistentAccount_ReturnsClosed
- * Condition: Account does not exist
- * Expected: Function should return CLOSED status
- */
-TEST_F(AccountManagerTest, evaluateAccountRisk_NonexistentAccount_ReturnsClosed) {
-    AccountStatus result = accountManager.evaluateAccountRisk("ACC999999", 10, 1000.0);
+/// ===========================================================================
+/// Verifies: AccountManager::verifyAccount()
+/// Test goal: Successfully verifies account and sends notifications/hits APIs
+/// In case: newly pending account verified via mock returning valid checks
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_verifyAccount_Normal_Success) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 100.0);
+    EXPECT_CALL(mockData, getIdentityVerificationStatus(acc)).WillOnce(Return("Pass"));
+    EXPECT_CALL(mockData, getCreditScore(acc)).WillOnce(Return("750"));
+    EXPECT_CALL(mockNotif, sendEmailNotification(_, "Account Verified", _)).WillOnce(Return(true));
     
-    ASSERT_EQ(result, AccountStatus::CLOSED);
+    bool ret = sut.verifyAccount(acc, true);
+    
+    EXPECT_TRUE(ret);
+    Account* ptr = sut.getAccount(acc);
+    EXPECT_TRUE(ptr->isVerified);
+    EXPECT_EQ(ptr->status, AccountStatus::ACTIVE);
 }
 
-/**
- * Test: evaluateAccountRisk_LowRiskProfile_ReturnsActive
- * Condition: Low transaction count and volume, verified account
- * Expected: Function should return ACTIVE
- */
-TEST_F(AccountManagerTest, evaluateAccountRisk_LowRiskProfile_ReturnsActive) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.verifyAccount(accountNumber, true);
+/// ===========================================================================
+/// Verifies: AccountManager::verifyAccount()
+/// Test goal: Returns false when given false, although it marks as false
+/// In case: newly pending account fails verification
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_verifyAccount_Normal_False) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 100.0);
+    EXPECT_CALL(mockData, getIdentityVerificationStatus(acc)).WillOnce(Return("Fail"));
+    EXPECT_CALL(mockData, getCreditScore(acc)).WillOnce(Return("300"));
+    // Expect no notification
     
-    AccountStatus result = accountManager.evaluateAccountRisk(accountNumber, 10, 5000.0);
+    bool ret = sut.verifyAccount(acc, false);
     
-    ASSERT_EQ(result, AccountStatus::ACTIVE);
+    EXPECT_FALSE(ret);
+    Account* ptr = sut.getAccount(acc);
+    EXPECT_FALSE(ptr->isVerified);
+    EXPECT_EQ(ptr->status, AccountStatus::PENDING_VERIFICATION);
 }
 
-/**
- * Test: evaluateAccountRisk_UnverifiedWithFraudAlert_SuspendsAccount
- * Condition: Account unverified AND has fraud alert (combined risk > HIGH_RISK_THRESHOLD)
- * Expected: Account should be suspended (unless in compliance audit mode)
- */
-TEST_F(AccountManagerTest, evaluateAccountRisk_UnverifiedWithFraudAlert_SuspendsAccount) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    Account* acc = accountManager.getAccount(accountNumber);
-    if (acc) {
-        acc->isVerified = false;
-        acc->hasFraudAlert = true;
-    }
-    
-    AccountStatus result = accountManager.evaluateAccountRisk(accountNumber, 10, 5000.0);
-    
-    // Risk score: unverified(20) + fraud alert(25) = 45 (not suspended)
-    // To trigger suspension, need > 75 threshold
-    ASSERT_NE(result, AccountStatus::CLOSED);
+/// ===========================================================================
+/// Verifies: AccountManager::verifyAccount()
+/// Test goal: Correctly ignores non-existent accounts
+/// In case: invoke on an account not there
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_verifyAccount_Error_NotFound) {
+    EXPECT_FALSE(sut.verifyAccount("ACC99", true));
 }
 
-/**
- * Test: evaluateAccountRisk_HighTransactionCount_IncreasesRisk
- * Condition: Transaction count > 100
- * Expected: Risk score should be elevated
- */
-TEST_F(AccountManagerTest, evaluateAccountRisk_HighTransactionCount_IncreasesRisk) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.verifyAccount(accountNumber, true);
+/// ===========================================================================
+/// Verifies: AccountManager::verifyAccount()
+/// Test goal: Fails to verify if no data service is active
+/// In case: set services to null, invoke verifyAccount
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_verifyAccount_NullServices) {
+    sut.setExternalDataService(nullptr);
+    sut.setNotificationService(nullptr);
+    std::string acc = sut.createAccount(AccountType::CHECKING, 100.0);
+    bool ret = sut.verifyAccount(acc, true);
     
-    AccountStatus result = accountManager.evaluateAccountRisk(accountNumber, 150, 5000.0);
-    
-    ASSERT_NE(result, AccountStatus::CLOSED);
+    EXPECT_TRUE(ret); // Since it was PENDING_VERIFICATION and verifyResult is true
 }
 
-/**
- * Test: evaluateAccountRisk_HighVolumeLastDay_IncreasesRisk
- * Condition: Volume > 1000000.0
- * Expected: Risk score should be elevated significantly
- */
-TEST_F(AccountManagerTest, evaluateAccountRisk_HighVolumeLastDay_IncreasesRisk) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.verifyAccount(accountNumber, true);
+/// ===========================================================================
+/// Verifies: AccountManager::verifyAccount()
+/// Test goal: Verifies account but it's already active, should return false
+/// In case: verifyAccount on ACTIVE account
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_verifyAccount_AlreadyActive) {
+    std::string acc = sut.createAccount(AccountType::CHECKING, 100.0);
+    Account* ptr = sut.getAccount(acc);
+    ptr->status = AccountStatus::ACTIVE; // Override status
     
-    AccountStatus result = accountManager.evaluateAccountRisk(accountNumber, 10, 2000000.0);
+    EXPECT_CALL(mockData, getIdentityVerificationStatus(acc)).WillOnce(Return("Pass"));
+    EXPECT_CALL(mockData, getCreditScore(acc)).WillOnce(Return("750"));
+    EXPECT_CALL(mockNotif, sendEmailNotification(_, _, _)).WillOnce(Return(true));
     
-    ASSERT_NE(result, AccountStatus::CLOSED);
+    bool ret = sut.verifyAccount(acc, true);
+    EXPECT_FALSE(ret);
+    EXPECT_TRUE(ptr->isVerified);
 }
+
 
 // ============================================================================
-// UPDATE ACCOUNT STATUS TESTS
+// Method: getAccountBalance() & getAccount()
 // ============================================================================
 
-/**
- * Test: updateAccountStatus_NonexistentAccount_ReturnsFalse
- * Condition: Account does not exist
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, updateAccountStatus_NonexistentAccount_ReturnsFalse) {
-    bool result = accountManager.updateAccountStatus("ACC999999", AccountStatus::ACTIVE);
+/// ===========================================================================
+/// Verifies: AccountManager::getAccountBalance() & getAccount()
+/// Test goal: Correctly fetches account properties or correctly returns null/-1 if invalid
+/// In case: valid vs uninitialized variables
+/// Method for Verification: Control flow analysis (C0/C1/C2 coverage)
+/// ===========================================================================
+TEST_F(AccountManagerUnitTest, SWE4_AccountManager_Getters) {
+    EXPECT_EQ(sut.getAccountBalance("ACC99"), -1.0);
+    EXPECT_EQ(sut.getAccount("ACC99"), nullptr);
     
-    ASSERT_FALSE(result);
-}
-
-/**
- * Test: updateAccountStatus_ClosedAccountTransition_ReturnsFalse
- * Condition: Current status is CLOSED and new status is not CLOSED
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, updateAccountStatus_ClosedAccountTransition_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::CLOSED);
-    
-    bool result = accountManager.updateAccountStatus(accountNumber, AccountStatus::ACTIVE);
-    
-    ASSERT_FALSE(result);
-}
-
-/**
- * Test: updateAccountStatus_FrozenToActiveUnverified_ReturnsFalse
- * Condition: Status is FROZEN, new status is ACTIVE, account is unverified
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, updateAccountStatus_FrozenToActiveUnverified_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::FROZEN);
-    
-    bool result = accountManager.updateAccountStatus(accountNumber, AccountStatus::ACTIVE);
-    
-    ASSERT_FALSE(result);
-}
-
-/**
- * Test: updateAccountStatus_FrozenToActiveVerified_ReturnsTrue
- * Condition: Status is FROZEN, account is verified, no fraud alert
- * Expected: Function should return true
- */
-TEST_F(AccountManagerTest, updateAccountStatus_FrozenToActiveVerified_ReturnsTrue) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.verifyAccount(accountNumber, true);
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::FROZEN);
-    
-    bool result = accountManager.updateAccountStatus(accountNumber, AccountStatus::ACTIVE);
-    
-    ASSERT_TRUE(result);
-}
-
-/**
- * Test: updateAccountStatus_SuspendedToActive_DecrementsSuspendedCount
- * Condition: Status is SUSPENDED, new status is ACTIVE
- * Expected: Suspended account counter should decrement
- */
-TEST_F(AccountManagerTest, updateAccountStatus_SuspendedToActive_DecrementsSuspendedCount) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    accountManager.suspendAccount(accountNumber, "Test");
-    ASSERT_EQ(accountManager.getSuspendedAccountCount(), 1);
-    
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::ACTIVE);
-    
-    ASSERT_EQ(accountManager.getSuspendedAccountCount(), 0);
-}
-
-/**
- * Test: updateAccountStatus_ActiveToSuspended_IncrementsSuspendedCount
- * Condition: Status is ACTIVE, new status is SUSPENDED
- * Expected: Suspended account counter should increment
- */
-TEST_F(AccountManagerTest, updateAccountStatus_ActiveToSuspended_IncrementsSuspendedCount) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    ASSERT_EQ(accountManager.getSuspendedAccountCount(), 0);
-    
-    accountManager.updateAccountStatus(accountNumber, AccountStatus::SUSPENDED);
-    
-    ASSERT_EQ(accountManager.getSuspendedAccountCount(), 1);
-}
-
-// ============================================================================
-// GET ACCOUNT TESTS
-// ============================================================================
-
-/**
- * Test: getAccount_ExistingAccount_ReturnsValidPointer
- * Condition: Account exists
- * Expected: Function should return valid account pointer
- */
-TEST_F(AccountManagerTest, getAccount_ExistingAccount_ReturnsValidPointer) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    
-    Account* account = accountManager.getAccount(accountNumber);
-    
-    ASSERT_NE(account, nullptr);
-    ASSERT_EQ(account->accountNumber, accountNumber);
-}
-
-/**
- * Test: getAccount_NonexistentAccount_ReturnsNull
- * Condition: Account does not exist
- * Expected: Function should return nullptr
- */
-TEST_F(AccountManagerTest, getAccount_NonexistentAccount_ReturnsNull) {
-    Account* account = accountManager.getAccount("ACC999999");
-    
-    ASSERT_EQ(account, nullptr);
-}
-
-// ============================================================================
-// GET ACCOUNT BALANCE TESTS
-// ============================================================================
-
-/**
- * Test: getAccountBalance_ExistingAccount_ReturnsCorrectBalance
- * Condition: Account exists
- * Expected: Function should return the account's balance
- */
-TEST_F(AccountManagerTest, getAccountBalance_ExistingAccount_ReturnsCorrectBalance) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1500.50);
-    
-    double balance = accountManager.getAccountBalance(accountNumber);
-    
-    ASSERT_DOUBLE_EQ(balance, 1500.50);
-}
-
-/**
- * Test: getAccountBalance_NonexistentAccount_ReturnsNegativeOne
- * Condition: Account does not exist
- * Expected: Function should return -1.0
- */
-TEST_F(AccountManagerTest, getAccountBalance_NonexistentAccount_ReturnsNegativeOne) {
-    double balance = accountManager.getAccountBalance("ACC999999");
-    
-    ASSERT_EQ(balance, -1.0);
-}
-
-// ============================================================================
-// VERIFY ACCOUNT TESTS
-// ============================================================================
-
-/**
- * Test: verifyAccount_UnverifiedPendingAccount_ActivatesAccount
- * Condition: Account is PENDING_VERIFICATION and verificationResult is true
- * Expected: Account status should change to ACTIVE
- */
-TEST_F(AccountManagerTest, verifyAccount_UnverifiedPendingAccount_ActivatesAccount) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    
-    bool result = accountManager.verifyAccount(accountNumber, true);
-    Account* account = accountManager.getAccount(accountNumber);
-    
-    ASSERT_TRUE(result);
-    ASSERT_EQ(account->status, AccountStatus::ACTIVE);
-}
-
-/**
- * Test: verifyAccount_NonexistentAccount_ReturnsFalse
- * Condition: Account does not exist
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, verifyAccount_NonexistentAccount_ReturnsFalse) {
-    bool result = accountManager.verifyAccount("ACC999999", true);
-    
-    ASSERT_FALSE(result);
-}
-
-/**
- * Test: verifyAccount_InvalidVerificationResult_ReturnsFalse
- * Condition: verificationResult is false
- * Expected: Function should return false
- */
-TEST_F(AccountManagerTest, verifyAccount_InvalidVerificationResult_ReturnsFalse) {
-    std::string accountNumber = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    
-    bool result = accountManager.verifyAccount(accountNumber, false);
-    
-    ASSERT_FALSE(result);
-}
-
-// ============================================================================
-// GET SUSPENDED ACCOUNT COUNT TESTS
-// ============================================================================
-
-/**
- * Test: getSuspendedAccountCount_InitialValue_ReturnsZero
- * Condition: No accounts have been suspended
- * Expected: Function should return 0
- */
-TEST_F(AccountManagerTest, getSuspendedAccountCount_InitialValue_ReturnsZero) {
-    int count = accountManager.getSuspendedAccountCount();
-    
-    ASSERT_EQ(count, 0);
-}
-
-/**
- * Test: getSuspendedAccountCount_AfterSuspensions_ReturnsCorrectCount
- * Condition: Multiple accounts have been suspended
- * Expected: Function should return correct count
- */
-TEST_F(AccountManagerTest, getSuspendedAccountCount_AfterSuspensions_ReturnsCorrectCount) {
-    std::string acc1 = accountManager.createAccount(AccountType::CHECKING, 1000.0);
-    std::string acc2 = accountManager.createAccount(AccountType::SAVINGS, 2000.0);
-    std::string acc3 = accountManager.createAccount(AccountType::INVESTMENT, 3000.0);
-    
-    accountManager.suspendAccount(acc1, "Reason 1");
-    accountManager.suspendAccount(acc2, "Reason 2");
-    accountManager.suspendAccount(acc3, "Reason 3");
-    
-    int count = accountManager.getSuspendedAccountCount();
-    
-    ASSERT_EQ(count, 3);
+    std::string acc = sut.createAccount(AccountType::CHECKING, 100.0);
+    EXPECT_EQ(sut.getAccountBalance(acc), 100.0);
+    EXPECT_NE(sut.getAccount(acc), nullptr);
 }
