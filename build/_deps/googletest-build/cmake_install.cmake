@@ -1,8 +1,8 @@
-# Install script for directory: F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src
+# Install script for directory: F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/CalculatorProject")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/GoogleTestCPlus")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-build/googlemock/cmake_install.cmake")
+  include("F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-build/googlemock/cmake_install.cmake")
 endif()
 

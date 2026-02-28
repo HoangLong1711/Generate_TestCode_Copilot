@@ -38,6 +38,12 @@ This document defines the comprehensive rules and standards for generating unit 
 6. **Audit Trail**: For compliance purposes, production code must be unmodified by test generation
 
 ---
+**STRICT TEST VALUE RULE:**
+
+Tests that vary numeric input values must only be created when a specific system requirement or the SDD explicitly mandates those values. The test generator must be able to point to the exact requirement/SDD clause that justifies each numeric test case. Generating numeric test cases solely to explore value combinations, mathematical properties, or to chase coverage without SDD traceability is forbidden.
+
+
+---
 
 ## 1. Test File Structure and Naming
 
@@ -157,7 +163,8 @@ For each function, generate test cases across three categories:
   - Representative positive/negative values
   - Values that exercise main code paths
   - Examples: small integers, common calculations, standard object states
-- **Minimum**: 2-3 test cases per function
+ - **Rule**: Only add normal-case value variations when they are explicitly required by the system requirements or the SDD. Do NOT add exploratory or property-based numeric tests that are not traced to a requirement.
+ - **When required**: If the requirement/SDD demands specific input values, include the minimal set required to demonstrate the behaviour for those values (typically 1–2 representative values). Otherwise, omit extra normal numeric variants and rely on the boundary suite to drive coverage.
 
 ### 5.2 Boundary Cases
 - **Purpose**: Verify correct behavior at edge values
@@ -328,10 +335,11 @@ INSTANTIATE_TEST_SUITE_P(
     CalculatorBoundaryTest,
     ::testing::Values(
         std::make_pair(0, 0),                      // Zero boundary
-        std::make_pair(INT_MAX, 0),                // Maximum value (no overflow)
-        std::make_pair(INT_MIN, 0),                // Minimum value (no underflow)
-        std::make_pair(INT_MAX / 2, INT_MAX / 2), // Mid-range positive
-        std::make_pair(INT_MIN / 2, INT_MIN / 2)  // Mid-range negative
+        std::make_pair(INT_MAX, 0),                // Maximum value
+        std::make_pair(INT_MIN, 0),                // Minimum value
+        std::make_pair(INT_MAX / 2, INT_MAX / 2),  // Mid-range positive
+        std::make_pair(INT_MIN / 2, INT_MIN / 2),  // Mid-range negative
+        std::make_pair(INT_MAX - 1, 1)             // Optional near-boundary (INT_MAX-1 / INT_MIN+1)
     )
 );
 
@@ -352,17 +360,24 @@ TEST_P(CalculatorBoundaryTest, SWE4_Calculator_complexAdd_Boundary_Edge_Values) 
 
 **CRITICAL RULE: Use TEST_P When**:
 - ✅ **SAME function, SAME logic, DIFFERENT numeric values** — Use parameterized test
-- ✅ Boundary value testing (0, INT_MAX, INT_MIN, mid-range)
-- ✅ Multiple representative values of same category (e.g., small positive, large positive, negative)
+- ✅ Boundary value testing using the STRICT minimal set (see below)
 - ✅ Reduces code duplication for similar test cases
 - ✅ Numeric range analysis testing
 
-**MANDATORY: Overflow/Underflow Testing**:
-For all functions with numeric inputs, **ALWAYS include tests that**:
-1. **Reach but do NOT exceed limits**: Test with INT_MAX, INT_MIN, INT_MAX/2, INT_MIN/2
-2. **Document behavior at limits**: Specify what happens when values approach thresholds
-3. **Test with zero**: Include 0, -0, and near-zero values
-4. **Multiple value categories**: Use TEST_P to cover small, large, negative, and boundary values
+**MANDATORY: Overflow/Underflow Testing (STRICT)**:
+For all functions with numeric inputs, include a minimal, focused boundary suite consisting of these cases (total ≈ 5–6 tests):
+1. `0` (zero)
+2. `INT_MAX` (maximum)
+3. `INT_MIN` (minimum)
+4. `INT_MAX/2` (mid positive)
+5. `INT_MIN/2` (mid negative)
+6. Optional: one near-boundary case (e.g., `INT_MAX-1` or `INT_MIN+1`) when a near-limit behavior must be validated
+
+Notes:
+- Aim for approximately 5 tests for boundaries; up to 6 if the optional near-boundary test is required.
+- Do not add additional redundant numeric variants that only change magnitudes without exercising new branches or decisions.
+- Document expected behavior at limits (wrap, saturate, undefined, etc.) in the test header.
+- Mandatory traceability: every numeric test case MUST be linked to a specific requirement or SDD clause. Do NOT add numeric test cases solely for exploratory coverage or mathematical properties — only add a value test when the requirement/SDD explicitly requires that value or when the value is necessary to exercise a documented behavior.
 
 Example Overflow Test:
 ```cpp
@@ -589,7 +604,22 @@ If after 5 iterations coverage remains < 100%, document:
 - **Compiler**: GCC/MinGW (Windows)
 - **Standard**: C++17
 
----
+### Handling Missing Build/Library Dependencies
+
+If the target machine does not have the required build tools or libraries installed, the automated agent MUST NOT attempt to substitute by generating alternate analysis artifacts (for example, by producing standalone JS/HTML/CSS reports and performing its own offline analysis). Instead the agent must:
+
+- **Notify the user** with a clear message that required build tools or libraries are missing and that a proper build environment is required to compile and run the tests.
+- **List the missing requirements** (minimum required items) so the user can install them manually. At minimum this list should include:
+    - CMake (>= 3.10)
+    - A C/C++ compiler toolchain (GCC/MinGW or MSVC)
+    - Google Test / Google Mock (gtest, gmock)
+    - gcov/gcovr (coverage tooling)
+    - Standard development utilities (make, ninja or equivalent)
+- **Provide optional platform hints** for package names or install sources (e.g., "gtest/gmock via your distribution's packages or fetched by CMake ExternalProject"), but do not assume or perform installation.
+- **Halt further automatic report-generation work** that depends on a successful native build; instead await user action after dependencies are satisfied.
+
+This approach preserves correctness and traceability for safety-critical builds and ensures the user explicitly controls the build environment.
+
 
 ## 13. Example Test File Template
 
@@ -765,8 +795,8 @@ TEST_P(CalculatorAddThreeTest, SWE4_Calculator_addThree_Comprehensive_Values) {
 
 | Test Category | Recommended Count | Rule |
 |---------------|-------------------|------|
-| **Normal Cases** | 3-4 | Use TEST_P for different magnitudes (small, large, typical) |
-| **Boundary Cases** | 5-7 | Use TEST_P for: 0, INT_MAX, INT_MIN, INT_MAX/2, INT_MIN/2, near-zero |
+| **Normal Cases** | Only when required by SDD/requirements (0-2) | Use TEST_P only if the requirement/SDD mandates specific input values; otherwise do not add extra numeric variants |
+| **Boundary Cases** | ~5-6 | Use TEST_P for the STRICT set: 0, INT_MAX, INT_MIN, INT_MAX/2, INT_MIN/2 (optional near-boundary to reach 6) |
 | **Error Cases** | 2-4 | Use TEST_F for complex error scenarios; TEST_P for value variations |
 | **Total per Function** | **10-15** | Consolidate with TEST_P to avoid test explosion |
 | **Total per Module** | **20-40** | If > 40 tests, consolidate further or review if all are necessary |
@@ -854,10 +884,10 @@ Determine your function type and apply the corresponding minimum test strategy:
 **MINIMUM Test Cases**:
 | Test Type | Count | Rationale |
 |-----------|-------|-----------|
-| Normal case | 1 | Execute the line (C0) |
-| Boundary (zero) | 1 | Verify 0 behavior |
-| Boundary (large) | 1 | Verify scale independence |
-| **TOTAL** | **3** | ✅ Sufficient for C0=100% |
+| Normal case | 0-1 (only if SDD/requirement mandates) | Include only when specific input values are required by SDD; otherwise omit |
+| Boundary (zero) | 1 | Verify 0 behavior (required per boundary policy) |
+| Boundary (large) | 1 | Verify scale independence (use the strict boundary set in §7) |
+| **TOTAL** | **1-3** | Minimal tests; prefer boundary-only unless SDD requires normal values |
 
 **Anti-Pattern** ❌:
 ```cpp
@@ -1064,8 +1094,8 @@ TEST_P(AddTest, SWE4_Add_Coverage) { ... }
 | Boundary Type | Include? | Example | Rationale |
 |---------------|----------|---------|-----------|
 | **Zero** | ✅ YES | 0 | Additive identity; asymptotic behavior |
-| **INT_MAX** | ⚠️ SELECTIVE | INT_MAX, INT_MAX/2 | Only if function uses comparisons or arithmetic |
-| **INT_MIN** | ⚠️ SELECTIVE | INT_MIN, INT_MIN/2 | Only if function uses negative numbers |
+| **INT_MAX** | ✅ YES (STRICT)** | INT_MAX, INT_MAX/2 | Required for numeric boundary analysis |
+| **INT_MIN** | ✅ YES (STRICT)** | INT_MIN, INT_MIN/2 | Required for numeric boundary analysis |
 | **Loop: 0 iterations** | ✅ YES | count=0 | May skip loop body entirely |
 | **Loop: 1 iteration** | ✅ YES | count=1 | Off-by-one errors |
 | **Loop: Many iterations** | ✅ YES | count=100 | Loop accumulation patterns |
@@ -1074,8 +1104,9 @@ TEST_P(AddTest, SWE4_Add_Coverage) { ... }
 | **Large positive** | ⚠️ OPTIONAL | 1000, 10000 | Only if distinct from small positive |
 
 **Example**: For `addThree(a, b, c)`:
-- ✅ Include: 0, small, large, negative, INT_MAX/4
-- ❌ Exclude: (0, 1), (1, 2), (2, 3), ... (redundant representations of "small positive")
+- ✅ Include (STRICT minimal): 0, INT_MAX, INT_MIN, INT_MAX/2, INT_MIN/2
+- ✅ Optional (if needed): one near-boundary case such as `INT_MAX-1` or `INT_MIN+1` (to reach 6 total)
+- ❌ Exclude: many extra numeric variants that do not exercise new branches (e.g., (0,1), (1,2), (2,3))
 
 ---
 

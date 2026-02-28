@@ -4,19 +4,19 @@
 cmake_minimum_required(VERSION 3.5)
 
 file(MAKE_DIRECTORY
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src"
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-build"
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix"
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/tmp"
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/src"
-  "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-src"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-build"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/tmp"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/src"
+  "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/${subDir}")
+    file(MAKE_DIRECTORY "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp${cfgdir}") # cfgdir has leading slash
 endif()

@@ -7,8 +7,10 @@ set(CMAKE_DEPENDS_GENERATOR "MinGW Makefiles")
 # The top level Makefile was generated from the following files:
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
+  "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/CMakeDetermineSystem.cmake"
   "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/CMakeGenericSystem.cmake"
   "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/CMakeInitializeConfigs.cmake"
+  "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/CMakeSystem.cmake.in"
   "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/CMakeSystemSpecificInformation.cmake"
   "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/CMakeSystemSpecificInitialize.cmake"
   "C:/SoftWare/cmake-3.27.7-windows-x86_64/cmake-3.27.7-windows-x86_64/share/cmake-3.27/Modules/ExternalProject.cmake"
@@ -36,6 +38,7 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
+  "CMakeFiles/3.27.7/CMakeSystem.cmake"
   "googletest-populate-prefix/tmp/googletest-populate-mkdirs.cmake"
   "googletest-populate-prefix/src/googletest-populate-stamp/download-googletest-populate.cmake"
   "googletest-populate-prefix/src/googletest-populate-stamp/extract-googletest-populate.cmake"

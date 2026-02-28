@@ -56,10 +56,10 @@ RM = C:\SoftWare\cmake-3.27.7-windows-x86_64\cmake-3.27.7-windows-x86_64\bin\cma
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = F:\AI_Gen_CPlus\MyProject
+CMAKE_SOURCE_DIR = F:\AI_Gen_CPlus\Auto_Generate_Tool
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = F:\AI_Gen_CPlus\MyProject\build
+CMAKE_BINARY_DIR = F:\AI_Gen_CPlus\Auto_Generate_Tool\build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -131,9 +131,9 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start F:\AI_Gen_CPlus\MyProject\build\CMakeFiles F:\AI_Gen_CPlus\MyProject\build\\CMakeFiles\progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\AI_Gen_CPlus\Auto_Generate_Tool\build\CMakeFiles F:\AI_Gen_CPlus\Auto_Generate_Tool\build\\CMakeFiles\progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start F:\AI_Gen_CPlus\MyProject\build\CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\AI_Gen_CPlus\Auto_Generate_Tool\build\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -225,101 +225,101 @@ gtest_main/fast:
 	$(MAKE) $(MAKESILENT) -f _deps\googletest-build\googletest\CMakeFiles\gtest_main.dir\build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build
 .PHONY : gtest_main/fast
 
-src/Calculator.obj: src/Calculator.cpp.obj
-.PHONY : src/Calculator.obj
+src/AccountManager.obj: src/AccountManager.cpp.obj
+.PHONY : src/AccountManager.obj
 
 # target to build an object file
-src/Calculator.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Calculator.cpp.obj
-.PHONY : src/Calculator.cpp.obj
+src/AccountManager.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/AccountManager.cpp.obj
+.PHONY : src/AccountManager.cpp.obj
 
-src/Calculator.i: src/Calculator.cpp.i
-.PHONY : src/Calculator.i
+src/AccountManager.i: src/AccountManager.cpp.i
+.PHONY : src/AccountManager.i
 
 # target to preprocess a source file
-src/Calculator.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Calculator.cpp.i
-.PHONY : src/Calculator.cpp.i
+src/AccountManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/AccountManager.cpp.i
+.PHONY : src/AccountManager.cpp.i
 
-src/Calculator.s: src/Calculator.cpp.s
-.PHONY : src/Calculator.s
+src/AccountManager.s: src/AccountManager.cpp.s
+.PHONY : src/AccountManager.s
 
 # target to generate assembly for a file
-src/Calculator.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Calculator.cpp.s
-.PHONY : src/Calculator.cpp.s
+src/AccountManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/AccountManager.cpp.s
+.PHONY : src/AccountManager.cpp.s
 
-src/Device_Smartphone.obj: src/Device_Smartphone.cpp.obj
-.PHONY : src/Device_Smartphone.obj
+src/TransactionProcessor.obj: src/TransactionProcessor.cpp.obj
+.PHONY : src/TransactionProcessor.obj
 
 # target to build an object file
-src/Device_Smartphone.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Device_Smartphone.cpp.obj
-.PHONY : src/Device_Smartphone.cpp.obj
+src/TransactionProcessor.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/TransactionProcessor.cpp.obj
+.PHONY : src/TransactionProcessor.cpp.obj
 
-src/Device_Smartphone.i: src/Device_Smartphone.cpp.i
-.PHONY : src/Device_Smartphone.i
+src/TransactionProcessor.i: src/TransactionProcessor.cpp.i
+.PHONY : src/TransactionProcessor.i
 
 # target to preprocess a source file
-src/Device_Smartphone.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Device_Smartphone.cpp.i
-.PHONY : src/Device_Smartphone.cpp.i
+src/TransactionProcessor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/TransactionProcessor.cpp.i
+.PHONY : src/TransactionProcessor.cpp.i
 
-src/Device_Smartphone.s: src/Device_Smartphone.cpp.s
-.PHONY : src/Device_Smartphone.s
+src/TransactionProcessor.s: src/TransactionProcessor.cpp.s
+.PHONY : src/TransactionProcessor.s
 
 # target to generate assembly for a file
-src/Device_Smartphone.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Device_Smartphone.cpp.s
-.PHONY : src/Device_Smartphone.cpp.s
+src/TransactionProcessor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/TransactionProcessor.cpp.s
+.PHONY : src/TransactionProcessor.cpp.s
 
-src/Math.obj: src/Math.cpp.obj
-.PHONY : src/Math.obj
+test/SWE4_AccountManager.obj: test/SWE4_AccountManager.cpp.obj
+.PHONY : test/SWE4_AccountManager.obj
 
 # target to build an object file
-src/Math.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Math.cpp.obj
-.PHONY : src/Math.cpp.obj
+test/SWE4_AccountManager.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_AccountManager.cpp.obj
+.PHONY : test/SWE4_AccountManager.cpp.obj
 
-src/Math.i: src/Math.cpp.i
-.PHONY : src/Math.i
+test/SWE4_AccountManager.i: test/SWE4_AccountManager.cpp.i
+.PHONY : test/SWE4_AccountManager.i
 
 # target to preprocess a source file
-src/Math.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Math.cpp.i
-.PHONY : src/Math.cpp.i
+test/SWE4_AccountManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_AccountManager.cpp.i
+.PHONY : test/SWE4_AccountManager.cpp.i
 
-src/Math.s: src/Math.cpp.s
-.PHONY : src/Math.s
+test/SWE4_AccountManager.s: test/SWE4_AccountManager.cpp.s
+.PHONY : test/SWE4_AccountManager.s
 
 # target to generate assembly for a file
-src/Math.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/src/Math.cpp.s
-.PHONY : src/Math.cpp.s
+test/SWE4_AccountManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_AccountManager.cpp.s
+.PHONY : test/SWE4_AccountManager.cpp.s
 
-test/SWE4_Calculator.obj: test/SWE4_Calculator.cpp.obj
-.PHONY : test/SWE4_Calculator.obj
+test/SWE4_TransactionProcessor.obj: test/SWE4_TransactionProcessor.cpp.obj
+.PHONY : test/SWE4_TransactionProcessor.obj
 
 # target to build an object file
-test/SWE4_Calculator.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_Calculator.cpp.obj
-.PHONY : test/SWE4_Calculator.cpp.obj
+test/SWE4_TransactionProcessor.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_TransactionProcessor.cpp.obj
+.PHONY : test/SWE4_TransactionProcessor.cpp.obj
 
-test/SWE4_Calculator.i: test/SWE4_Calculator.cpp.i
-.PHONY : test/SWE4_Calculator.i
+test/SWE4_TransactionProcessor.i: test/SWE4_TransactionProcessor.cpp.i
+.PHONY : test/SWE4_TransactionProcessor.i
 
 # target to preprocess a source file
-test/SWE4_Calculator.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_Calculator.cpp.i
-.PHONY : test/SWE4_Calculator.cpp.i
+test/SWE4_TransactionProcessor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_TransactionProcessor.cpp.i
+.PHONY : test/SWE4_TransactionProcessor.cpp.i
 
-test/SWE4_Calculator.s: test/SWE4_Calculator.cpp.s
-.PHONY : test/SWE4_Calculator.s
+test/SWE4_TransactionProcessor.s: test/SWE4_TransactionProcessor.cpp.s
+.PHONY : test/SWE4_TransactionProcessor.s
 
 # target to generate assembly for a file
-test/SWE4_Calculator.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_Calculator.cpp.s
-.PHONY : test/SWE4_Calculator.cpp.s
+test/SWE4_TransactionProcessor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\run_tests.dir\build.make CMakeFiles/run_tests.dir/test/SWE4_TransactionProcessor.cpp.s
+.PHONY : test/SWE4_TransactionProcessor.cpp.s
 
 # Help Target
 help:
@@ -338,18 +338,18 @@ help:
 	@echo ... gtest
 	@echo ... gtest_main
 	@echo ... run_tests
-	@echo ... src/Calculator.obj
-	@echo ... src/Calculator.i
-	@echo ... src/Calculator.s
-	@echo ... src/Device_Smartphone.obj
-	@echo ... src/Device_Smartphone.i
-	@echo ... src/Device_Smartphone.s
-	@echo ... src/Math.obj
-	@echo ... src/Math.i
-	@echo ... src/Math.s
-	@echo ... test/SWE4_Calculator.obj
-	@echo ... test/SWE4_Calculator.i
-	@echo ... test/SWE4_Calculator.s
+	@echo ... src/AccountManager.obj
+	@echo ... src/AccountManager.i
+	@echo ... src/AccountManager.s
+	@echo ... src/TransactionProcessor.obj
+	@echo ... src/TransactionProcessor.i
+	@echo ... src/TransactionProcessor.s
+	@echo ... test/SWE4_AccountManager.obj
+	@echo ... test/SWE4_AccountManager.i
+	@echo ... test/SWE4_AccountManager.s
+	@echo ... test/SWE4_TransactionProcessor.obj
+	@echo ... test/SWE4_TransactionProcessor.i
+	@echo ... test/SWE4_TransactionProcessor.s
 .PHONY : help
 
 

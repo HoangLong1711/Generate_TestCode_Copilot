@@ -16,11 +16,18 @@ This workflow provides a step-by-step process to generate, build, execute, and v
    - Mock external dependencies using `NiceMock<Stub>` + `EXPECT_CALL` (as defined in Testing_Rules.md §6)
    - Ensure 100% C0/C1/C2 coverage target per Testing_Rules.md §4
 
-4. **Write SWE4_<ModuleName>.cpp and compile (Auto-fix until success)** — Save generated tests to test/ folder, run `.\run.bat build` to compile; if compilation fails, automatically detect compiler/linker errors, fix issues in test file, and rebuild; **repeat until build succeeds with NO iteration limit** (only coverage iterations are limited to 5)
+4. **Write SWE4_<ModuleName>.cpp and compile (Auto-fix until success)** — Save generated tests to test/ folder, run `run.bat build` to compile; if compilation fails, automatically detect compiler/linker errors, fix issues in test file, and rebuild; **repeat until build succeeds with NO iteration limit** (only coverage iterations are limited to 5)
+   - **Note**: Never modify `run.bat` or CMakeLists.txt; only fix test code itself
+   - If `run.bat build` fails due to missing dependencies, report which libraries/tools are missing and halt; user must install them manually
 
-5. **Execute tests and analyze coverage** — Clean old coverage data first (remove build/*.gcda, build/*.gcov, reports/*), run `.\run.bat test` to execute test suite, then run `.\run.bat report` to generate gcovr coverage report (C0/C1/C2), parse results to identify uncovered lines/branches
+5. **Execute tests and analyze coverage** — Clean old coverage data first (remove build/*.gcda, build/*.gcov, reports/*). Run `run.bat test` to execute the test suite. Then run `run.bat report [<module>]` to generate a gcovr coverage report (C0/C1/C2); if you supply a module name it will be placed in `reports/<module>/coverage.html`, otherwise `reports/general/coverage.html`. Parse results to identify uncovered lines/branches.
+   - **If `run.bat test` fails**: Report error; user must fix environment (likely missing gtest/gmock dependency)
+   - **If `run.bat report` fails**: Report missing gcovr tool; user must install before coverage analysis can proceed
 
-6. **Iterate test improvements (max 5 attempts for coverage only)** — If coverage < 100%, refine test cases for uncovered paths, rebuild (using unlimited auto-fix for any new build errors), re-test, and re-measure coverage; **after 5 coverage improvement iterations**, document all uncovered lines with explanations (unreachable code, conditional complexity, etc.) in the HTML report
+6. **Iterate test improvements (max 5 attempts for coverage only)** — If coverage < 100%, refine test cases for uncovered paths, rebuild (using unlimited auto-fix for any new build errors in test code), re-test, and re-measure coverage; **after 5 coverage improvement iterations**, document all uncovered lines with explanations (unreachable code, conditional complexity, etc.) in the HTML report
+   - **Build failures during iteration**: Fix test code issues; if failure is due to missing dependencies, report to user and halt iteration
+
+7. **Automated Rules Mapping Review (5 passes)** — After coverage iterations complete, run an automated review that compares generated tests and metadata against the rules in [Testing_Rules.md](Testing_Rules.md) and the checklist in [reviewing_Rules.md](reviewing_Rules.md). The agent will attempt up to 5 automated review passes. On each pass it will report mismatches and attempt safe auto-fixes (e.g., consolidate `TEST_P`, add missing documentation headers, remove un-traced numeric cases). If issues remain after 5 passes, the agent will pause and present a concise remediation list and prompt the user to correct tests or rules before proceeding.
 
 ## Further Considerations
 

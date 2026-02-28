@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.5)
 
 # Make file names absolute:
 #
-get_filename_component(filename "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-subbuild/googletest-populate-prefix/src/main.zip" ABSOLUTE)
-get_filename_component(directory "F:/AI_Gen_CPlus/MyProject/build/_deps/googletest-src" ABSOLUTE)
+get_filename_component(filename "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-subbuild/googletest-populate-prefix/src/main.zip" ABSOLUTE)
+get_filename_component(directory "F:/AI_Gen_CPlus/Auto_Generate_Tool/build/_deps/googletest-src" ABSOLUTE)
 
 message(STATUS "extracting...
      src='${filename}'
