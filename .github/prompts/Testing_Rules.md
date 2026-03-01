@@ -557,11 +557,12 @@ TEST_F(DeviceUnitTest, SWE4_Device_privateState_Affects_Public_Method) {
 - **C2 Coverage**: Percentage of condition combinations executed (target: 100%)
 
 ### Uncovered Code Documentation
-If after 5 iterations coverage remains < 100%, document these limitations in a separate text file (e.g., `coverage_limitations.txt`). **DO NOT** append this documentation to the generated HTML report.
-The `coverage_limitations.txt` file MUST be highly detailed and specify the exact snippets or conditions not covered. It should include:
+If after 5 iterations coverage remains < 100%, the agent MUST automatically analyze the coverage gaps to determine the specific reasons why the code flow cannot meet the requirements or what conditions prevent access. Document these limitations by appending them to the central `reports/report/coverage_limitations.txt` file under a new heading for the current module. **DO NOT** append this documentation to the generated HTML report.
+
+The appended section in `coverage_limitations.txt` MUST be highly detailed and specify the exact snippets or conditions not covered. It should include:
 - **File and Line Number**: Exact source code file and line(s) not covered.
 - **Snippet/Condition**: The specific code snippet, STL call, or condition missing the coverage.
-- **Reason**: Why this line/branch is unreachable (e.g., defensive error handling, compiler-generated exception paths, `std::bad_alloc`, etc.).
+- **Reason**: Why this line/branch is unreachable (e.g., the code flow cannot meet the requirements, specific conditions preventing access, defensive error handling, compiler-generated exception paths, `std::bad_alloc`, etc.).
 - **Path Analysis**: Explain the control flow that cannot reach this code.
 - **Acceptance**: Formally accept uncovered code as justified dead code or architecture-specific limitation.
 

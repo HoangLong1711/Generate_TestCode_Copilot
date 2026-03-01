@@ -1,0 +1,26 @@
+# Build directories
+build/
+bin/
+lib/
+*obj
+*o
+*a
+*exe
+
+# Coverage reports
+reports/
+*.gcno
+*.gcda
+*.gcov
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# VS Code
+.vscode/
+
+# Other
+.DS_Store

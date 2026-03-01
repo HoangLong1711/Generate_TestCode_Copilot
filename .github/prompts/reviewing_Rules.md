@@ -19,7 +19,7 @@ Purpose: provide a concise, editable checklist used by the automated review step
 - **TEST_P Consolidation:** Parameterized tests (`TEST_P`) are used instead of many redundant `TEST_F` cases where only numeric parameters vary.
 - **Documentation Headers:** Every test has the required documentation header (Verifies/Goal/In case/Method).
 - **Mocking Strategy:** External dependencies are mocked; internal methods use real instances unless SDD specifies otherwise.
-- **Coverage Targets:** Coverage report exists and shows C0/C1/C2 metrics; if <100% the uncovered lines are documented per rules.
+- **Coverage Targets:** Coverage report exists and shows C0/C1/C2 metrics; if <100% the specific reasons for uncovered lines (e.g., code flow limitations, access conditions) are automatically generated and appended to the central `reports/report/coverage_limitations.txt` per rules.
 - **No JS Fallback:** Agent did not generate JS/HTML/CSS analysis fallback in place of a native build; instead it listed missing toolchain dependencies if build tools were absent.
 - **Test Naming:** Test file and test names follow the `SWE4_<ModuleName>` and `SWE4_<Module>_<Function>_<Scenario>` conventions.
 - **Quantity Limits:** Per-function and per-module test counts respect the limits in `Testing_Rules.md` (≤15 per function, ≤40 per module) unless justified and documented.

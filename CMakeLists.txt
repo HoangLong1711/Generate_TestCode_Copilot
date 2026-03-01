@@ -10,9 +10,21 @@ if(MSVC)
   # MSVC compiler
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND USE_LLVM_COVERAGE)
-  # Clang with LLVM coverage: use source-based coverage instrumentation
-  add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate")
+  # Clang with LLVM coverage: use source-based coverage instrumentation with MC/DC
+  add_compile_options(-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc)
+
+  # WORKAROUND: MSYS2 Clang 21 does not bundle a profiling runtime (libclang_rt.profile).
+  # The standalone LLVM installation at C:/Program Files/LLVM has it.
+  # We explicitly add its search path and link against it.
+  set(LLVM_RT_DIR "C:/Program Files/LLVM/lib/clang/21/lib/windows")
+  if(EXISTS "${LLVM_RT_DIR}/clang_rt.profile-x86_64.lib")
+    message(STATUS "Found LLVM profiling runtime: ${LLVM_RT_DIR}/clang_rt.profile-x86_64.lib")
+    link_directories("${LLVM_RT_DIR}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -L\"${LLVM_RT_DIR}\" -lclang_rt.profile-x86_64")
+  else()
+    message(WARNING "LLVM profiling runtime NOT found at ${LLVM_RT_DIR}. Coverage linking may fail.")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate")
+  endif()
 elseif(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT USE_LLVM_COVERAGE))
   # GCC (or Clang when not using LLVM coverage): fallback to gcov-style flags
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")

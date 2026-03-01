@@ -75,7 +75,7 @@ Module Name: Calculator (auto-extracted from filename)
    - Color-coding: Green (covered), Red (uncovered), Yellow (partial)
 5. **Documentation**: 
    - If 100% coverage: Success summary with metrics
-   - If <100% after 5 iterations: Uncovered code analysis with technical justifications per Testing_Rules.md §11
+   - If <100% after 5 iterations: Auto-analyze the coverage gaps and append specific reasons (e.g., code flow limitations, conditions preventing access) to the central `reports/report/coverage_limitations.txt` per Testing_Rules.md §11
 
 ---
 
