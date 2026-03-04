@@ -6,6 +6,17 @@ This document defines the comprehensive rules and standards for generating unit 
 
 ## ⚠️ CRITICAL RULE #1: Production Code Modification FORBIDDEN
 
+## CROSS-MACHINE CONSISTENCY REQUIREMENT
+
+All generated tests must be:
+
+- Deterministic
+- Independent of local IDE state
+- Independent of currently open file
+- Independent of developer-specific environment variables
+
+No rule may assume context outside this repository.
+
 ### Absolute Rule: NEVER Modify src/ or inc/ Directories
 
 **Under NO circumstances shall production code be modified during test development. This is the most important rule.**

@@ -34,3 +34,16 @@ Purpose: provide a concise, editable checklist used by the automated review step
 
 ---
 Editable by project leads; keep this file under version control and update as SDD/rules evolve.
+
+# ENFORCEMENT POLICY
+
+If any REQUIRED checklist item fails after 5 review passes:
+
+The agent MUST:
+
+1. Stop further generation
+2. Output concise remediation list
+3. Highlight specific failing tests
+4. Await user correction
+
+Agent must NOT silently ignore failures.

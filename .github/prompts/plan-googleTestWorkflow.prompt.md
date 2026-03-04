@@ -1,3 +1,17 @@
+# STRICT EXECUTION MODE
+
+This workflow must be followed sequentially.
+No step may be skipped.
+No step may be reordered.
+
+If any step fails due to missing environment:
+→ STOP and report missing dependency.
+
+The agent is forbidden from:
+- Generating alternative analysis artifacts
+- Simulating coverage
+- Bypassing native build
+
 # Plan: Google Test Workflow for C++ Unit Testing
 
 This workflow provides a step-by-step process to generate, build, execute, and validate Google Test test cases with 100% code coverage following ISO 26262 ASIL D standards. The workflow integrates with your existing CMake build system, gcovr coverage analysis, and naming conventions (SWE4_<ModuleName>.cpp).
